@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Query,  Body, Path, APIRouter
-from schemas.hotels import Hotel, HotelPATCH
+from src.schemas.hotels import Hotel, HotelPATCH
 
 router = APIRouter(prefix="/hotels", tags=["hotels"])
 
