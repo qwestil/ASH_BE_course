@@ -82,7 +82,6 @@ def update_hotel(
     hotel["name"] = hotel_data.name
     return {"status": "OK"}
 
-
 @router.patch("/hotels/{hotel_id}", summary="Частичное изменение отеля")
 def partial_update_hotel(
     hotel_id: int,
