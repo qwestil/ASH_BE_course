@@ -1,5 +1,8 @@
 from fastapi import FastAPI, Query,  Body, Path, APIRouter
+from sqlalchemy import insert
+from src.database import async_session_maker
 from src.schemas.hotels import Hotel, HotelPATCH
+from src.models.hotels import HotelsOrm
 
 router = APIRouter(prefix="/hotels", tags=["hotels"])
 
@@ -69,15 +72,15 @@ def delete_hotel(
 '''
 
 @router.post("", summary="Добавление отеля")
-def add_hotel(
+async def add_hotel(
     hotel_data: Hotel
 ):
-    global hotels
-    hotels.append({
-        "id": hotels[-1]["id"] + 1,
-        "title": hotel_data.title,
-        "name": hotel_data.name,
-    })
+    async with async_session_maker() as session:
+        add_hotel_stmnt = insert(HotelsOrm).values(**hotel_data. model_dump())
+        await session.execute(add_hotel_stmnt)
+        await session.commit()
+        
+    return {"status": "OK"}
 
 
 @router.put("/{hotel_id}", summary="Изменение отеля")
