@@ -21,16 +21,25 @@ hotels = [
 def func():
     return "Hello, World!"
 
-@router.get("/hotels", summary="Получение списка отелей")
+@router.get("", summary="Получение списка отелей")
 def get_hotels(
     title: str = None,
+    page: int = Query(1, description="Номер страницы", ge=1),
+    per_page: int = Query(10, description="Количество отелей на странице", gt=1, lt=30)
 ):  
-    if title != None:
-        return [hotel for hotel in hotels if hotel["title"] == title]
-    else:
-        return hotels
+    hotels_ = []
+    for hotel in hotels:
+        if title and hotel["title"] != title:
+            continue
+        hotels_.append(hotel)
+        
+    if page and per_page:
+        start = per_page * (page - 1)
+        end = start + per_page
+        return hotels_[start:end]
+    return hotels_
     
-@router.delete("/hotels/{hotel_id}", summary="Удаление отеля")
+@router.delete("/{hotel_id}", summary="Удаление отеля")
 def delete_hotel(
         hotel_id: int
     ):
@@ -59,7 +68,7 @@ def delete_hotel(
     return {"status": "ok"}
 '''
 
-@router.post("/hotels", summary="Добавление отеля")
+@router.post("", summary="Добавление отеля")
 def add_hotel(
     hotel_data: Hotel
 ):
@@ -71,7 +80,7 @@ def add_hotel(
     })
 
 
-@router.put("/hotels/{hotel_id}", summary="Изменение отеля")
+@router.put("/{hotel_id}", summary="Изменение отеля")
 def update_hotel(
     hotel_id: int,
     hotel_data: Hotel
@@ -82,7 +91,7 @@ def update_hotel(
     hotel["name"] = hotel_data.name
     return {"status": "OK"}
 
-@router.patch("/hotels/{hotel_id}", summary="Частичное изменение отеля")
+@router.patch("/{hotel_id}", summary="Частичное изменение отеля")
 def partial_update_hotel(
     hotel_id: int,
     hotel_data: HotelPATCH
