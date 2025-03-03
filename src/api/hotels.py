@@ -12,20 +12,19 @@ def func():
 
 @router.get("", summary="Получение списка отелей")
 async def get_hotels(
-    id: int = None,
+    location: str = None,
     title: str = None,
     page: int = Query(1, description="Номер страницы", ge=1),
     per_page: int = Query(10, description="Количество отелей на странице", gt=1, lt=30)
 ):  
-    
     limit = per_page
     offset = per_page * (page - 1)
     async with async_session_maker() as session:
         query = select(HotelsOrm)
-        if id:
-            query = query.filter_by(id=id)
+        if location:
+            query = query.filter(HotelsOrm.location.ilike(f"%{location}%"))
         if title:
-            query = query.filter.by(title=title)
+            query = query.filter(HotelsOrm.title.ilike(f"%{title}%"))
         query = (
             query
             .limit(limit)
@@ -36,21 +35,7 @@ async def get_hotels(
         print(query.compile(compile_kwargs={"literal_binds": True}))
         
         hotels = result.scalars().all()
-        # print(type(hotels), hotels)
         return hotels
-        
-    
-    # hotels_ = []
-    # for hotel in hotels:
-    #     if title and hotel["title"] != title:
-    #         continue
-    #     hotels_.append(hotel)
-        
-    # if page and per_page:
-    #     start = per_page * (page - 1)
-    #     end = start + per_page
-    #     return hotels_[start:end]
-    # return hotels_
     
 @router.delete("/{hotel_id}", summary="Удаление отеля")
 def delete_hotel(
