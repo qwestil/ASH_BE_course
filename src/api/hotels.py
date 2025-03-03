@@ -1,46 +1,56 @@
 from fastapi import FastAPI, Query,  Body, Path, APIRouter
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 from src.database import async_session_maker
 from src.schemas.hotels import Hotel, HotelPATCH
 from src.models.hotels import HotelsOrm
 
 router = APIRouter(prefix="/hotels", tags=["hotels"])
 
-hotels = [
-    {"id": 1, "title": "Sochi", "name": "Radisson", "price": 100},
-    {"id": 2, "title": "Дубай", "name": "Burj Al Arab", "price": 200},
-    {"id": 3, "title": "Москва", "name": "Метрополь", "price": 150},
-    {"id": 4, "title": "Санкт-Петербург", "name": "Астория", "price": 250},
-    {"id": 5, "title": "Париж", "name": "Ritz", "price": 300},
-    {"id": 6, "title": "Лондон", "name": "Ritz", "price": 300},
-    {"id": 7, "title": "Милан", "name": "Ritz", "price": 300},
-    {"id": 8, "title": "Барселона", "name": "Ritz", "price": 300},
-    {"id": 9, "title": "Мадрид", "name": "Ritz", "price": 300},
-    {"id": 10, "title": "Берлин", "name": "Ritz", "price": 300}
-]
-
-
 @router.get("/")
 def func():
     return "Hello, World!"
 
 @router.get("", summary="Получение списка отелей")
-def get_hotels(
+async def get_hotels(
+    id: int = None,
     title: str = None,
     page: int = Query(1, description="Номер страницы", ge=1),
     per_page: int = Query(10, description="Количество отелей на странице", gt=1, lt=30)
 ):  
-    hotels_ = []
-    for hotel in hotels:
-        if title and hotel["title"] != title:
-            continue
-        hotels_.append(hotel)
+    
+    limit = per_page
+    offset = per_page * (page - 1)
+    async with async_session_maker() as session:
+        query = select(HotelsOrm)
+        if id:
+            query = query.filter_by(id=id)
+        if title:
+            query = query.filter.by(title=title)
+        query = (
+            query
+            .limit(limit)
+            .offset(offset)
+        )
         
-    if page and per_page:
-        start = per_page * (page - 1)
-        end = start + per_page
-        return hotels_[start:end]
-    return hotels_
+        result = await session.execute(query)
+        print(query.compile(compile_kwargs={"literal_binds": True}))
+        
+        hotels = result.scalars().all()
+        # print(type(hotels), hotels)
+        return hotels
+        
+    
+    # hotels_ = []
+    # for hotel in hotels:
+    #     if title and hotel["title"] != title:
+    #         continue
+    #     hotels_.append(hotel)
+        
+    # if page and per_page:
+    #     start = per_page * (page - 1)
+    #     end = start + per_page
+    #     return hotels_[start:end]
+    # return hotels_
     
 @router.delete("/{hotel_id}", summary="Удаление отеля")
 def delete_hotel(
