@@ -18,10 +18,16 @@ async def get_hotels(
     page: int = Query(1, description="Номер страницы", ge=1),
     per_page: int = Query(10, description="Количество отелей на странице", gt=1, lt=30)
 ):  
-    # limit = per_page or 5
-    # offset = per_page * (page - 1)
+    limit = per_page or 5
+    offset = per_page * (page - 1)
+    
     async with async_session_maker() as session:
-        return await HotelsRepository(session).get_all()
+        return await HotelsRepository(session).get_all(
+        location=location,
+        title=title,
+        limit=limit,
+        offset=offset
+    )
     # async with async_session_maker() as session:
     #     query = select(HotelsOrm)
     #     if location:
