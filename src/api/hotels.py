@@ -78,14 +78,21 @@ def delete_hotel(
 @router.post("", summary="Добавление отеля")
 async def add_hotel(
     hotel_data: Hotel
-):
+):  
     async with async_session_maker() as session:
-        add_hotel_stmnt = insert(HotelsOrm).values(**hotel_data. model_dump())
-        print(add_hotel_stmnt.compile(compile_kwargs={"literal_binds": True}))
-        await session.execute(add_hotel_stmnt)
+        hotel = HotelsOrm(**hotel_data.model_dump())
+        hotel_repo = HotelsRepository(session)
+        added_hotel = await hotel_repo.add(hotel)
         await session.commit()
         
-    return {"status": "OK"}
+    return {"status": "OK", "data": added_hotel}
+    # async with async_session_maker() as session:
+    #     add_hotel_stmnt = insert(HotelsOrm).values(**hotel_data. model_dump())
+    #     print(add_hotel_stmnt.compile(compile_kwargs={"literal_binds": True}))
+    #     await session.execute(add_hotel_stmnt)
+    #     await session.commit()
+        
+    # return {"status": "OK"}
 
 
 @router.put("/{hotel_id}", summary="Изменение отеля")
