@@ -3,6 +3,7 @@ from sqlalchemy import insert, select
 from src.database import async_session_maker
 from src.schemas.hotels import Hotel, HotelPATCH
 from src.models.hotels import HotelsOrm
+from repositories.hotels import HotelsRepository
 
 router = APIRouter(prefix="/hotels", tags=["hotels"])
 
@@ -17,25 +18,27 @@ async def get_hotels(
     page: int = Query(1, description="Номер страницы", ge=1),
     per_page: int = Query(10, description="Количество отелей на странице", gt=1, lt=30)
 ):  
-    limit = per_page
-    offset = per_page * (page - 1)
+    # limit = per_page or 5
+    # offset = per_page * (page - 1)
     async with async_session_maker() as session:
-        query = select(HotelsOrm)
-        if location:
-            query = query.filter(HotelsOrm.location.ilike(f"%{location}%"))
-        if title:
-            query = query.filter(HotelsOrm.title.ilike(f"%{title}%"))
-        query = (
-            query
-            .limit(limit)
-            .offset(offset)
-        )
+        return await HotelsRepository(session).get_all()
+    # async with async_session_maker() as session:
+    #     query = select(HotelsOrm)
+    #     if location:
+    #         query = query.filter(HotelsOrm.location.ilike(f"%{location}%"))
+    #     if title:
+    #         query = query.filter(HotelsOrm.title.ilike(f"%{title}%"))
+    #     query = (
+    #         query
+    #         .limit(limit)
+    #         .offset(offset)
+    #     )
         
-        result = await session.execute(query)
-        print(query.compile(compile_kwargs={"literal_binds": True}))
+    #     result = await session.execute(query)
+    #     print(query.compile(compile_kwargs={"literal_binds": True}))
         
-        hotels = result.scalars().all()
-        return hotels
+    #     hotels = result.scalars().all()
+    #     return hotels
     
 @router.delete("/{hotel_id}", summary="Удаление отеля")
 def delete_hotel(
